@@ -17,6 +17,27 @@ You can run your application in dev mode that enables live coding using:
 Navigate to the Dev UI, which is available at <http://localhost:8080/q/dev/>. 
 From there you can access the SwaggerUI and the Tools UI, play around ! 
 
+### Interacting with the MCP Server
+
+The MCP server uses AI to interpret natural language and execute the appropriate tool. For example, you can ask it to filter tickets by a specific category, even though the category is computed dynamically from the ticket's content.
+
+**Example Query:**
+
+A user can provide a prompt like this:
+
+> "Show me all tickets related to security vulnerabilities."
+
+**How it Works:**
+
+1.  **Intent Recognition**: The AI understands the user wants to "list tickets" with a "security" filter.
+2.  **Tool Selection**: It identifies the `getTickets` tool, which has the description: *"Get a list of tickets. You can optionally filter by ticket type."*
+3.  **Parameter Matching**: The AI matches the phrase "security vulnerabilities" to the `SECURITY` value in the `TicketType` enum.
+4.  **Execution**: It calls the `getTickets` tool with the `SECURITY` type. The service then filters the tickets in memory based on keywords in their title and description.
+5.  **Response**: The AI formats the filtered list of tickets and presents it to the user.
+
+This allows for powerful, flexible queries using natural language, without needing to change the underlying database schema.
+
+---
 
 ## Packaging and running the application
 
@@ -56,6 +77,16 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 You can then execute your native executable with: `./target/mcp-api-demo-1.0.0-SNAPSHOT-runner`
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+
+## Running via Docker Compose
+
+```shell script
+docker-compose up -d
+```
+
+```shell script
+docker-compose down -v  
+```
 
 ## Related Guides
 

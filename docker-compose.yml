@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mcp-api-demo-postgres
+    environment:
+      POSTGRES_DB: mcp_api_demo
+      POSTGRES_USER: quarkus
+      POSTGRES_PASSWORD: quarkus
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quarkus -d mcp_api_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mcp-network
+
+  app:
+    image: ghcr.io/carljmosca/mcp-api-demo:latest
+    container_name: mcp-api-demo-app
+    environment:
+      # Database configuration
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/mcp_api_demo
+      QUARKUS_DATASOURCE_USERNAME: quarkus
+      QUARKUS_DATASOURCE_PASSWORD: quarkus
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      
+      # Hibernate configuration
+      QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION: drop-and-create
+      QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT: import.sql
+      # Force import.sql to run in production mode
+      QUARKUS_HIBERNATE_ORM_IMPORT_FILES_ENABLED: true
+      
+      QUARKUS_HIBERNATE_ORM_DATABASE_DEFAULT_SCHEMA: public
+      QUARKUS_HIBERNATE_ORM_LOG_SQL: true
+      
+      # Application configuration
+      QUARKUS_HTTP_HOST: 0.0.0.0
+      QUARKUS_HTTP_PORT: 8080
+      
+      # Logging
+      QUARKUS_LOG_LEVEL: INFO
+      QUARKUS_LOG_CATEGORY__ORG_SEBI__LEVEL: DEBUG
+      QUARKUS_LOG_CATEGORY__ORG_HIBERNATE__LEVEL: DEBUG
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  mcp-network:
+    driver: bridge

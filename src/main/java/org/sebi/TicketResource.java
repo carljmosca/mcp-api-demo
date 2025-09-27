@@ -1,31 +1,41 @@
 package org.sebi;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-
 @Path("/tickets")
+@ApplicationScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class TicketResource {
 
     @Inject
     TicketService ticketService;
 
     @GET
-    @Path("{id}")
-    public Ticket getTicket(long id) {
-        return ticketService.getTicket(id);
+    public List<Ticket> getTickets(@QueryParam("type") TicketType type) {
+        return ticketService.getTickets(type);
     }
 
     @GET
-    public List<Ticket> getTickets() {
-        return ticketService.getTickets();
+    @Path("/{id}")
+    public Ticket getTicket(@PathParam("id") Long id) {
+        return ticketService.getTicket(id);
     }
 
     @POST
-    public Ticket createTicket(Ticket ticket) {
-        return ticketService.createTicket(ticket);
+    @Transactional
+    public Response createTicket(Ticket ticket) {
+        if (ticket.id != null) {
+            throw new WebApplicationException("Id was invalidly set on request.", 422);
+        }
+        ticketService.createTicket(ticket);
+        return Response.ok(ticket).status(201).build();
     }
 }
