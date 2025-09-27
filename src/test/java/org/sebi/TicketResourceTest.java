@@ -4,17 +4,15 @@ import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
 class TicketResourceTest {
     @Test
-    void testHelloEndpoint() {
+    void testGetTicketsEndpoint() {
         given()
-          .when().get("/hello")
+          .when().get("/tickets")
           .then()
-             .statusCode(200)
-             .body(is("Hello from Quarkus REST"));
+             .statusCode(200);
     }
 
 }
