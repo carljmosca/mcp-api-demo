@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mcp-api-demo.fullname" . }}
+  labels:
+    {{- include "mcp-api-demo.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mcp-api-demo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mcp-api-demo.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.quarkus.http.port }}
+              protocol: TCP
+          env:
+            - name: QUARKUS_HTTP_PORT
+              value: "{{ .Values.quarkus.http.port }}"
+            - name: QUARKUS_DATASOURCE_DB_KIND
+              value: "{{ .Values.quarkus.datasource.dbKind }}"
+            {{- if .Values.postgres.enabled }}
+            - name: QUARKUS_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mcp-api-demo.fullname" . }}-postgres
+                  key: username
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mcp-api-demo.fullname" . }}-postgres
+                  key: password
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: "jdbc:postgresql://{{ include "mcp-api-demo.fullname" . }}-postgres:{{ .Values.postgres.service.port }}/{{ .Values.postgres.auth.database }}"
+            {{- end }}
+            - name: QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION
+              value: "{{ .Values.quarkus.hibernate.database.generation }}"
+            - name: QUARKUS_HIBERNATE_ORM_SQL_LOAD_SCRIPT
+              value: "{{ .Values.quarkus.hibernate.import.files }}"
+            - name: QUARKUS_HIBERNATE_ORM_IMPORT_FILES_ENABLED
+              value: "{{ ternary "true" "false" .Values.quarkus.hibernate.import.enabled }}"
+            # MCP server configuration
+            - name: QUARKUS_MCP_SERVER_ENABLED
+              value: "{{ ternary "true" "false" .Values.mcp.enabled }}"
+            - name: QUARKUS_MCP_SERVER_NAME
+              value: "{{ .Values.mcp.name }}"
+            - name: QUARKUS_MCP_SERVER_VERSION
+              value: "{{ .Values.mcp.version }}"
+            - name: QUARKUS_MCP_SERVER_PATH
+              value: "{{ .Values.mcp.path }}"
+            {{- with .Values.env }}
+            {{- range $k, $v := . }}
+            - name: {{ $k | quote }}
+              value: {{ $v | quote }}
+            {{- end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path | default "/" }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds | default 15 }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds | default 10 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path | default "/" }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds | default 5 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

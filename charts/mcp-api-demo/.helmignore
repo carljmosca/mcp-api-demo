@@ -1,0 +1,14 @@
+# Common Helm ignores
+.DS_Store
+# VCS
+.git/
+.gitignore
+# IDE
+.vscode/
+.idea/
+# Mac
+._*
+# Node
+node_modules/
+# Archives
+*.tgz

@@ -1,0 +1,18 @@
+apiVersion: v2
+name: mcp-api-demo
+version: 0.1.0
+appVersion: "1.0.0"
+description: Helm chart for mcp-api-demo (Quarkus) with PostgreSQL, Service, and Ingress
+kubeVersion: ">=1.23.0-0"
+type: application
+keywords:
+  - quarkus
+  - mcp
+  - postgres
+home: https://github.com/carljmosca/mcp-api-demo
+sources:
+  - https://github.com/carljmosca/mcp-api-demo
+maintainers:
+  - name: mcp-api-demo-maintainer
+    email: example@example.com
+icon: https://quarkus.io/assets/images/quarkus_logo_horizontal_rgb_reverse.svg

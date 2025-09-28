@@ -1,0 +1,27 @@
+Thank you for installing {{ .Chart.Name }}!
+
+1. Application URL
+{{- if .Values.ingress.enabled }}
+  Ingress host(s):
+  {{- range .Values.ingress.hosts }}
+    http://{{ .host }}
+  {{- end }}
+{{- else }}
+  Service: {{ include "mcp-api-demo.fullname" . }} on port {{ .Values.service.port }}
+  Use port-forward to access:
+    kubectl port-forward svc/{{ include "mcp-api-demo.fullname" . }} 8080:{{ .Values.service.port }}
+    Open: http://localhost:8080
+{{- end }}
+
+2. PostgreSQL connection
+  Service: {{ include "mcp-api-demo.fullname" . }}-postgres:{{ .Values.postgres.service.port }}
+  Database: {{ .Values.postgres.auth.database }}
+  Username: {{ .Values.postgres.auth.username }}
+  Password: {{ .Values.postgres.auth.password }}
+
+3. Health checks
+  Liveness:  {{ .Values.probes.liveness.path }}
+  Readiness: {{ .Values.probes.readiness.path }}
+
+4. MCP endpoint
+  Path: {{ .Values.mcp.path }} (enabled: {{ .Values.mcp.enabled }})

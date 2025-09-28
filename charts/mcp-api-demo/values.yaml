@@ -1,0 +1,96 @@
+image:
+  repository: ghcr.io/moscac/mcp-api-demo
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8080
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: mcp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+env:
+  # Additional environment variables for the app
+  # QUARKUS_LOG_LEVEL: DEBUG
+  # CUSTOM_VAR: value
+  {}
+
+probes:
+  liveness:
+    path: "/q/openapi"  # set to /q/health/live if quarkus-smallrye-health is enabled
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  readiness:
+    path: "/q/openapi"  # set to /q/health/ready if quarkus-smallrye-health is enabled
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+mcp:
+  enabled: true
+  name: "Ticket API MCP Server"
+  version: "1.0.0"
+  path: "/mcp"
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    username: app
+    password: app
+    database: app
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+quarkus:
+  http:
+    port: 8080
+  datasource:
+    dbKind: postgresql
+    # Set via env, derived from postgres service
+  hibernate:
+    database:
+      generation: drop-and-create
+    import:
+      files: import.sql
+      enabled: true
