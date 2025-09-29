@@ -1,0 +1,28 @@
+{{- if .Values.pdb.app.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "mcp-api-demo.fullname" . }}-app
+  labels:
+    {{- include "mcp-api-demo.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.pdb.app.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "mcp-api-demo.selectorLabels" . | nindent 6 }}
+---
+{{- end }}
+{{- if .Values.pdb.postgres.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "mcp-api-demo.fullname" . }}-postgres
+  labels:
+    {{- include "mcp-api-demo.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.pdb.postgres.maxUnavailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mcp-api-demo.name" . }}-postgres
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

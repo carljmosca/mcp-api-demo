@@ -1,6 +1,6 @@
 image:
-  repository: ghcr.io/moscac/mcp-api-demo
-  tag: "latest"
+  repository: ghcr.io/carljmosca/mcp-api-demo
+  tag: "main-37c49ce"
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -13,17 +13,16 @@ replicaCount: 1
 service:
   type: ClusterIP
   port: 8080
-  annotations: {}
 
 ingress:
   enabled: true
-  className: ""
+  className: tailscale
   annotations: {}
   hosts:
-    - host: mcp.local
+    - host: null
       paths:
         - path: /
-          pathType: Prefix
+          pathType: ImplementationSpecific
   tls: []
 
 resources:
@@ -62,6 +61,22 @@ postgres:
     repository: postgres
     tag: "15-alpine"
     pullPolicy: IfNotPresent
+  # Use a subdirectory for PGDATA so the container can create and own it (better for non-root)
+  pgdata: "/var/lib/postgresql/data/pgdata"
+  podSecurityContext:
+    # The official postgres:alpine image uses uid/gid 70 for the 'postgres' user
+    runAsUser: 70
+    runAsGroup: 70
+    fsGroup: 70
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    runAsUser: 70
+    runAsGroup: 70
   auth:
     username: app
     password: app
@@ -94,3 +109,29 @@ quarkus:
     import:
       files: import.sql
       enabled: true
+
+securityContext:
+  pod:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  container:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+
+pdb:
+  app:
+    enabled: true
+    maxUnavailable: 1
+  postgres:
+    enabled: true
+    maxUnavailable: 0
+
+networkPolicy:
+  enabled: true
+  # Allow app to call Postgres only; allow ingress to app from anywhere (typical Ingress controller path)
+  app:
+    allowFromNamespaces: []  # e.g., ["ingress-nginx"] if you want to lock further
+  postgres:
+    allowFromAppOnly: true

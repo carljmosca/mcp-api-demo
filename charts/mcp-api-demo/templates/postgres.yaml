@@ -33,14 +33,28 @@ spec:
         app.kubernetes.io/name: {{ include "mcp-api-demo.name" . }}-postgres
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      securityContext:
+        {{- if .Values.postgres.podSecurityContext }}
+        {{- toYaml .Values.postgres.podSecurityContext | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.securityContext.pod | nindent 8 }}
+        {{- end }}
       containers:
         - name: postgres
+          securityContext:
+            {{- if .Values.postgres.containerSecurityContext }}
+            {{- toYaml .Values.postgres.containerSecurityContext | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.securityContext.container | nindent 12 }}
+            {{- end }}
           image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
           imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.postgres.service.port }}
               name: postgres
           env:
+            - name: PGDATA
+              value: {{ .Values.postgres.pgdata | quote }}
             - name: POSTGRES_DB
               value: {{ .Values.postgres.auth.database | quote }}
             - name: POSTGRES_USER
