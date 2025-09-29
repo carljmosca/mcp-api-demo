@@ -105,6 +105,28 @@ This chart ships with restricted-friendly securityContext defaults. If your clus
   - `--set probes.readiness.path=/q/health/ready`
   Otherwise, the default `/q/openapi` is used for both probes.
 
+### Tailscale operator compatibility
+
+You can expose the app through the Tailscale operator either via Service or Ingress.
+
+- Service (LoadBalancer):
+
+```sh
+helm upgrade --install mcp charts/mcp-api-demo \
+  -n mcp-demo --create-namespace \
+  --set service.type=LoadBalancer \
+  --set service.loadBalancerClass=tailscale
+```
+
+- Ingress:
+
+```sh
+helm upgrade --install mcp charts/mcp-api-demo \
+  -n mcp-demo --create-namespace \
+  --set ingress.enabled=true \
+  --set ingress.className=tailscale
+```
+
 ### Talos + local-path provisioner (PSA)
 
 When using Rancher Local Path Provisioner on a Talos cluster with Pod Security Admission enforced, the helper pod uses hostPath and needs a privileged namespace. If you see PVC events like:
