@@ -2,16 +2,40 @@ package org.sebi;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 @Entity
 public class Ticket extends PanacheEntity {
     public String title;
     public String description;
     
+    // Cache the computed type to avoid recalculating on every access
+    @Transient
+    private TicketType cachedComputedType;
+    
     /**
-     * Dynamically computes ticket type based on keywords in title and description
+     * Dynamically computes ticket type based on keywords in title and description.
+     * Uses caching to avoid expensive recalculation.
      */
     public TicketType getComputedType() {
+        // Return cached value if available
+        if (cachedComputedType != null) {
+            return cachedComputedType;
+        }
+        
+        // Compute and cache the type
+        cachedComputedType = computeTypeFromContent();
+        return cachedComputedType;
+    }
+    
+    /**
+     * Forces recomputation of the ticket type (useful after title/description changes)
+     */
+    public void invalidateComputedTypeCache() {
+        cachedComputedType = null;
+    }
+    
+    private TicketType computeTypeFromContent() {
         String content = (title + " " + description).toLowerCase();
         
         // Security-related keywords

@@ -63,8 +63,9 @@ public class TicketTools {
                 LOG.debug("No type provided, returning all tickets");
             }
             
-            List<Ticket> result = ticketService.getTickets(ticketType);
-            LOG.debug("Returning {} tickets", result.size());
+            // Use optimized method that limits results at database level
+            List<Ticket> result = ticketService.getTicketsWithLimit(ticketType, 10);
+            LOG.debug("Returning {} tickets (limited)", result.size());
             
             if (result.isEmpty()) {
                 return "No tickets found" + (ticketType != null ? " for type " + ticketType : "") + ".";
@@ -75,10 +76,10 @@ public class TicketTools {
             if (ticketType != null) {
                 response.append(" of type ").append(ticketType);
             }
-            response.append(":\n\n");
+            response.append(" (showing up to 10):\n\n");
             
-            // Limit output to prevent very long responses
-            int maxTickets = Math.min(result.size(), 10);
+            // Process all returned tickets since we already limited at DB level
+            int maxTickets = result.size();
             for (int i = 0; i < maxTickets; i++) {
                 Ticket ticket = result.get(i);
                 response.append("ID: ").append(ticket.id)
